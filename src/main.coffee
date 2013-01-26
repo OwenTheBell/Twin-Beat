@@ -29,7 +29,7 @@ init = ->
 	g.frameCount = 0
 	g.gameWorld = new GameWorld()
 	g.cachedSprites = []
-	g.canvas = new Canvas()
+	#g.canvas = new Canvas()
 	gameLoop()
 
 #binding is required for this function so it can call other functions

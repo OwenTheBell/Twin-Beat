@@ -3,6 +3,7 @@ class window.GameLevel
 
 	#vert_hori: defines whether level or vertical or horizontal scroll
 	constructor: (@hori_vert) ->
+		@canvas = new DrawCanvas()
 		@entities = []
 		@hori_vert = hori_vert
 		#this is not set to adjust for zoom level, this needs to be changed
@@ -23,7 +24,7 @@ class window.GameLevel
 
 	addEntity: ->
 		for entity in arguments
-			_grtueijawgruioentities.push entity
+			@entities.push entity
 
 	addPlayer: (player) ->
 		@player = player
@@ -61,8 +62,10 @@ class window.GameLevel
 	update: ->
 		entity.update() for entity in @entities
 
-	draw: ->
-		entity.draw() for entity in @entities
+	draw: (rCanvas) ->
+		@canvas.clear()
+		entity.draw @canvas for entity in @entities
+		@canvas.draw rCanvas
 
 	checkExtremes: (entity) ->
 		extremes = entity.extremes

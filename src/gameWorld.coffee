@@ -1,11 +1,12 @@
 class window.GameWorld
 	constructor: () ->
-		@level1 = new GameLevel(false)
+		@level1 = new GameLevel(true)
+		@canvas = new RenderCanvas()
 
 	update: ->
 		@level1.update()
 
 	draw: ->
-		g.canvas.clear()
-		@level1.draw()
-		g.canvas.draw()
+		@canvas.clear()
+		@level1.draw @canvas
+		@canvas.draw()

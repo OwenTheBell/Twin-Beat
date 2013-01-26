@@ -3,41 +3,36 @@ This is a wrapper class that handles adding a canvas entity to the DOM as well
 as ensuring that everything draws to that canvas. This abstracts the need to 
 handle contexts with other objects as well as covering prerendering.
 ###
-class window.Canvas
+class window.WrapCanvas
 	constructor: ->
-		#this variable will control level of zoom eventually
 		@zoom = 1
 		@width = g.width
 		@height = g.height
-		#this canvas is for prerendering and has all objects drawn to it
 		@canvas = document.createElement 'canvas'
-		@canvas.width = @width * @zoom
-		@canvas.height = @height * @zoom
-		#this canvas is what is actually displayed by the game. Once @canvas has
-		#finished rendering, it is then drawn to this canvas and actually displayed
-		@renderCanvas = document.createElement 'canvas'
-		@renderCanvas.width = @width
-		@renderCanvas.height = @height
-		@renderCanvas.setAttribute 'id', "canvas#{@layer}"
+		@canvas.width = @width
+		@canvas.height = @height
 		@context = @canvas.getContext '2d'
-		@renderContext = @renderCanvas.getContext '2d'
+	
+	clear: ->
+		@context.clearRect 0, 0, @width, @height
+	
+	update: ->
+		@canvas.width = @width
+		@canvas.height = @height
+	
+	draw: ->
 
+class window.DrawCanvas extends WrapCanvas
+	constructor: ->
+		super
 		@context.strokeStyle = '#000000'
 
-		#add the canvas that we have created to our page
-		$('#twinbeat').append @renderCanvas
+	#this function takes the prerendered canvas that has been rendered and draws
+	#it to the canvas that is actually on the DOM
+	draw: (rCanvas) ->
+		rCanvas.drawCanvas @canvas
 
-	update: ->
-
-#this function takes the prerendered canvas that has been rendered and draws
-#it to the canvas that is actually on the DOM
-	draw: ->
-		@renderContext.drawImage @canvas, 0, 0, @width, @height
-
-	clear: ->
-		@context.clearRect 0, 0, @width * @zoom, @height * @zoom
-		@renderContext.clearRect 0, 0, @width, @height
-
+	#DO NOT USE. This is super depricated and will not work
 	drawText: (entity) ->
 		x = Math.round (entity.x - g.gameWorld.activeLevel.worldPos.x) * g.SCALE
 		y = Math.round (entity.y - g.gameWorld.activeLevel.worldPos.y) * g.SCALE
@@ -66,3 +61,30 @@ class window.Canvas
 		x = entity.x
 		y = entity.y
 		@context.strokeRect x, y, entity.width, entity.height
+
+###
+	This classes is specifically designed to take input canvases and draw them
+	to the screen. This lets me easily layer canavs, change the order of the
+	layering, and rotate the layered canvases.
+###
+class window.RenderCanvas extends WrapCanvas
+	constructor: ->
+		super
+		@renderCanvas = document.createElement 'canvas'
+		@renderCanvas.width = g.width
+		@renderCanvas.height = g.height
+		@renderContext = @renderCanvas.getContext '2d'
+		$('#twinbeat').append @renderCanvas
+	
+	update: ->
+		#don't think you really need anything here, or even need this method
+
+	clear: ->
+		@context.clearRect 0, 0, g.width, g.height
+		@renderContext.clearRect 0, 0, g.width, g.height
+
+	draw: ->
+		@renderContext.drawImage @canvas, 0, 0, g.width, g.height
+	
+	drawCanvas: (canvas) ->
+		@context.drawImage canvas, 0, 0, canvas.width, canvas.height
