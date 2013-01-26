@@ -6,6 +6,7 @@ handle contexts with other objects as well as covering prerendering.
 class window.WrapCanvas
 	constructor: ->
 		@zoom = 1
+		@angle = 0
 		@width = g.width
 		@height = g.height
 		@canvas = document.createElement 'canvas'
@@ -31,6 +32,12 @@ class window.DrawCanvas extends WrapCanvas
 	#it to the canvas that is actually on the DOM
 	draw: (rCanvas) ->
 		rCanvas.drawCanvas @canvas
+	
+	rotate: (angle) ->
+		@context.save()
+		@context.translate @width/2, @height/2
+		@context.rotate angle
+		@context.restore()
 
 	#DO NOT USE. This is super depricated and will not work
 	drawText: (entity) ->
@@ -87,4 +94,12 @@ class window.RenderCanvas extends WrapCanvas
 		@renderContext.drawImage @canvas, 0, 0, g.width, g.height
 	
 	drawCanvas: (canvas) ->
-		@context.drawImage canvas, 0, 0, canvas.width, canvas.height
+		halfW = Math.floor canvas.width/2
+		halfH = Math.floor canvas.height/2
+		@context.save()
+		@context.translate halfW, halfH
+		if canvas.angle != 0
+			console.log canvas.angle
+			@context.rotate canvas.angle
+		@context.drawImage canvas.canvas, -halfW, -halfH, canvas.width, canvas.height
+		@context.restore()

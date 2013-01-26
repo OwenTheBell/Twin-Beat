@@ -65,7 +65,7 @@ class window.GameLevel
 	draw: (rCanvas) ->
 		@canvas.clear()
 		entity.draw @canvas for entity in @entities
-		@canvas.draw rCanvas
+		rCanvas.drawCanvas @canvas
 
 	checkExtremes: (entity) ->
 		extremes = entity.extremes
