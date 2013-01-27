@@ -7,14 +7,13 @@ class window.GameWorld
 		@nextLevel = g.now + @levelSplit
 		@pickupSplit = 5000
 		@nextPickup = g.now + @pickupSplit + (Math.random() * @pickupSplit)
-		@challengeSplit = 5000
-		@nextChall = g.now + @challengeSplit
 		@canvas = new RenderCanvas()
-		@pickup1 = new Pickup 25, 500, 0, @level1
-		@pickup2 = new Pickup 25, 500, 0, @level2
 		@gameOver = false
+		@startGame = true
+		@start = g.now
 		@winner = null
 		@swapZoomAdj = 0.3
+		@themeMusic = new Audio 'theme'
 	
 	collectPickup: (onbot) ->
 		@level1.entities.remove @pickup1
@@ -29,15 +28,16 @@ class window.GameWorld
 	
 	swap: (onbot) ->
 		if not @swapPeriod
-			if onbot
-				@swapPeriod = g.now + g.swap
-				@targetAngle1 = @levelOrder[0].angle + (Math.PI / 2)
-				@targetAngle2 = @levelOrder[1].angle - (Math.PI / 2)
-				console.log @targetAngle1 + ' ' + @targetAngle2
+			@swapPeriod = g.now + g.swap
+			console.log @swapPeriod + ' ' + g.now
+			@targetAngle1 = @createTarget @levelOrder[0].angle, Math.PI / 2
+			@targetAngle2 = @createTarget @levelOrder[1].angle, -(Math.PI / 2)
+			console.log @targetAngle1 + ' ' + @targetAngle2
 		else if g.now <= @swapPeriod
 			@swapZoomAdj -= 0.6 * (g.elapsed / g.swap)
 			@level1.canvas.zoom = 0.7 + Math.abs @swapZoomAdj
 			@level2.canvas.zoom = 0.7 + Math.abs @swapZoomAdj
+			console.log @level1.canvas.zoom
 			angleAdj = (Math.PI / 2) * (g.elapsed / g.swap)
 			@levelOrder[0].angle += angleAdj
 			@levelOrder[1].angle -= angleAdj
@@ -48,6 +48,7 @@ class window.GameWorld
 			@levelOrder[0].angle = @targetAngle2
 			@levelOrder[1].angle = @targetAngle1
 			@nextPickup = g.now + @pickupSplit + (Math.random() * @pickupSplit)
+			@swapZoomAdj = 0.3
 			delete @swapPeriod
 			delete @targetAngle2
 			delete @targetAngle1
@@ -55,9 +56,11 @@ class window.GameWorld
 	reverse: (onbot) ->
 		if not @revPeriod
 			@revPeriod  = g.now + g.reverse
+			console.log @revPeriod + ' ' + g.now
 			if onbot then @revTarget = 0
 			else @revTarget = 1
-			@targetAngle = @levelOrder[@revTarget].angle + Math.PI
+			@targetAngle = @createTarget @levelOrder[@revTarget].angle, Math.PI
+			console.log @targetAngle
 		else if g.now <= @revPeriod
 			angleAdj = (Math.PI) * (g.elapsed / g.reverse)
 			@levelOrder[@revTarget].angle += angleAdj
@@ -70,76 +73,84 @@ class window.GameWorld
 			delete @targetAngle
 			@nextPickup = g.now + @pickupSplit + (Math.random() * @pickupSplit)
 	
+	createTarget: (old, adj) ->
+		target = (Math.PI / 2) * Math.round (old + adj) / (Math.PI / 2)
+		if target > Math.PI * 2
+			target = (Math.PI / 2) * Math.round (target - Math.PI * 2) / (Math.PI / 2)
+		return target
+	
 	challenge: ->
 		if not @challengePeriod
-			@challengePeriod = g.now + g.challenge
+			@challengePeriod = g.now + g.challenge + g.challengePrep
+			@challengePrep = g.now + g.challengePrep
 			@targetAngle1 = @level1.angle
 			@targetAngle2 = @level2.angle
-			@level1.entities.remove @pickup1
-			@level2.entities.remove @pickup2
-		if g.now <= @challengePeriod
+			@themeMusic.pause()
+			@challenge1.play()
+		else if g.now <= @challengePrep
+			1 #just waiting for now
+		else if g.now <= @challengePerio
+			delete @challengePrep
 			angleAdj = (Math.PI * 2 * g.challengeRot) * (g.elapsed / g.challenge)
 			@level1.angle += angleAdj
 			@level2.angle -= angleAdj
-		if g.now >= @challengePeriod
-			@level1.angle = @targetAngle1
-			@level2.angle = @targetAngle2
-			delete @targetAngle1
-			delete @targetAngle2
-			delete @challengePeriod
-			@nextPickup = g.now + @pickupSplit + (Math.random() * @pickupSplit)
-			@nextChall = g.now + @challengeSplit
+		else if g.now >= @challengePeriod
+			if not @challengePrep
+				@challengePrep = g.now + g.challengePrep
+			else
+				@level1.angle = @targetAngle1
+				@level2.angle = @targetAngle2
+				delete @targetAngle1
+				delete @targetAngle2
+				delete @challengePeriod
+				delete @challengePrep
+				@nextPickup = g.now + @pickupSplit + (Math.random() * @pickupSplit)
+				@nextChall = g.now + @challengeSplit
+				@themeMusic.play()
 
 	update: ->
 		g.input.update()
-		if not @gameOver
+		if not @gameOver and not @startGame
 
 			#level up
 			if @nextLevel <= g.now
 				@level1.level++
 				@level2.level++
 				@nextLevel = g.now + @levelSplit
+				@pickupSplit -= 100
 
 			#check if using powerup or if you need to spawn one
 			if @swapPeriod then @swap()
 			else if @revPeriod then @reverse()
-			else if @challengePeriod then @challenge()
-			else if g.now >= @nextChall then @challenge()
+			#else if @challengePeriod then @challenge()
+			#else if g.now >= @nextChall then @challenge()
 			else
 				if @nextPickup and @nextPickup <= g.now
-					type = Math.floor Math.random() * 2
-					type = 0
-					@pickup1.changeType type
-					@pickup2.changeType type
-					#@level1.entities.push @pickup1
-					@level2.entities.push @pickup2
-					@nextPickup = null
-				if @pickup1.collected
 					onbot = false
-					if @level1 == @levelOrder[1]
+					if Math.random() > 0.5
 						onbot = true
-					@collectPickup onbot
-				else if @pickup2.collected
-					onbot = false
-					if @level2 == @levelOrder[1]
-						onbot = true
-					@collectPickup onbot
-
+					if Math.random() > 0.5
+						@swap true
+					else
+						@reverse onbot
 			#check for game over and update the levels
 			if not @level1.gameOver
-				@level1.update g.input.isKeyNewDown 83
+				if not @challengePrep
+					@level1.update g.input.isKeyNewDown 83
 			else if not @gameOver
+				@end = g.now
 				@gameOver = true
 				@winner = 2
-				console.log 'player 2 wins'
 			if not @level2.gameOver
-				@level2.update g.input.isKeyNewDown 83
+				if not @challengePrep
+					#@level2.update g.input.isKeyNewDown 83
+					@level2.update g.input.isKeyNewDown 76
 			else if not @gameOver
+				@end = g.now
 				@gameOver = true
 				@winner = 1
-				console.log 'player 1 wins'
 		else
-			if g.input.isKeyNewDown 32
+			if g.input.isKeyNewDown 88
 				@reset = true
 
 	draw: ->
@@ -155,5 +166,8 @@ class window.GameWorld
 			@canvas.context.fillRect 100, 100, 400, 400
 			$('#gameText').css 'color', '#ff00ff'
 			$('#uprTxt').html 'WINNER!!!!'
-			$('#lwrTxt').html 'Hit SPACE to play again'
+			$('#midTxt').html 'You lasted: ' + ((@end - @start) / 1000)
+			$('#lwrTxt').html 'Press X to play again'
+		else if @startGame
+			$('#uprTxt').html 'Press X to play'
 		@canvas.draw()

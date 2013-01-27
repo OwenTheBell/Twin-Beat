@@ -32,21 +32,6 @@ class window.DrawCanvas extends WrapCanvas
 	#it to the canvas that is actually on the DOM
 	draw: (rCanvas) ->
 		rCanvas.drawCanvas @canvas
-	
-	#DO NOT USE. This is super depricated and will not work
-	drawText: (entity) ->
-		x = Math.round (entity.x - g.gameWorld.activeLevel.worldPos.x) * g.SCALE
-		y = Math.round (entity.y - g.gameWorld.activeLevel.worldPos.y) * g.SCALE
-		@context.font = entity.fontSize + ' ' + entity.font
-		@context.fillStyle = entity.color
-		@context.fillText entity.text, x, y
-
-#this draws a string to a specfic set of pixel coordinates on the canvas
-#it does not change position with the player
-	hardTextDraw: (text, left, top, font, fontSize, color) ->
-		@context.font =  fontSize + ' ' + font
-		@context.fillStyle = color
-		@context.fillText text, left, top
 
 #this always draws off the top left corner as all entities have that value
 	drawFill: (entity) ->

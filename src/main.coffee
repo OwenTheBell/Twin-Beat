@@ -40,6 +40,15 @@ window.requestAnimationFrame or=
         window.setTimeout( ->
             callback new Date()
         , 1000 / 60)
+
+#if console is not supported (ie. IE not in debug mode) then set the console
+#to an empty object to make sure that the code doesn't crash
+try
+	console
+catch e
+	console = {}
+	console.log = ->
+
 ###
 setInterval ->
   $('#fps').html g.output
@@ -55,15 +64,18 @@ init = ->
 	g.height = $('#twinbeat').height()
 	g.top = $('#twinbeat').top
 	g.left = $('#twinbeat').left
-	g.gravity = .1
-	g.lateral = 3 #per frame lateral move, needs to change
+	g.gravity = .06
+	g.lateral = 4 #per frame lateral move, needs to change
 	g.entityDim = 30
-	g.swap = 1000 #time to swap levels
-	g.reverse = 500
+	g.swap = 200 #time to swap levels
+	g.reverse = 300
 	g.challenge = 25000
+	g.challengePrep = 3000
 	g.challengeRot = 2 #number of full rotations in challenge mode
 	g.fps = 0
 	g.now = Date.now()
+	g.start = Date.now()
+	g.end = 0
 	g.lastFrame = g.now
 	g.elapsed = 0
 	g.sixty = Date.now()
@@ -78,8 +90,8 @@ gameLoop = ->
 	g.now = Date.now()
 	g.elapsed = g.now - g.lastFrame
 	g.lastFrame = g.now
-#sometimes requestAnimationFrame runs at greater than 60Hz so ensure that
-#framerate remains capped at 1/60
+	#sometimes requestAnimationFrame runs at greater than 60Hz so ensure that
+	#framerate remains capped at 1/60
 	g.elapsed = 1/60 if g.elapsed < 1/60
 	if g.frameCount < 60
 		g.frameCount++
@@ -96,7 +108,11 @@ run = ->
 		delete g.gameWorld
 		$('#twinbeat').html ''
 		$('#uprTxt').html ''
+		$('#midTxt').html ''
 		$('#lwrTxt').html ''
 		g.gameWorld = new GameWorld()
+		g.gameWorld.startGame = false
+		g.gameWorld.start = g.now
+		g.gameWorld.themeMusic.play()
 	g.gameWorld.update()
 	g.gameWorld.draw()

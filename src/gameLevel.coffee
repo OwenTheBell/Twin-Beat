@@ -27,8 +27,12 @@ class window.GameLevel
 		@gameOver = @player.dead
 		if @nextSpawn <= g.now
 			for i in [0..@level]
-				1
-				#@entities.push new Obstacle g.width * 1.5, 15 + Math.floor(Math.random() * (g.height - g.entityDim * 1.5)), @obstacleC, @
+				@entities.push new Obstacle(
+					g.width * 1.5
+					15 + Math.floor(Math.random() * (g.height - g.entityDim * 1.5))
+					@obstacleC
+					@
+				)
 			@nextSpawn = g.now + @spawnGap + Math.random() * @spawnGap
 		@canvas.angle = @angle
 		toRemove = []
@@ -44,49 +48,3 @@ class window.GameLevel
 		@canvas.clear()
 		entity.draw @canvas for entity in @entities
 		rCanvas.drawCanvas @canvas
-
-###
-	This is a level that servers only to display text on the screen. There are no
-	entities or anything. The reason this exists as a level is for clarity as it
-	is added to the gameWorld's list of levels.
-###
-class window.TextLevel
-	constructor: () ->
-		@texts =[]
-		@canvas = g.canvases[0]
-		@levelStart = true
-
-	addText: (text, left, top, font, fontSize, color) ->
-		@texts.push {
-			text: text
-			left: left
-			top: top
-			font: font
-			fontSize: fontSize
-			color: color
-		}
-
-	massAddText: ->
-		for text in @arguments
-			if text.text and text.left and text.top and text.font and text.fontSize and text.color
-				@texts.push text
-			else
-				console.log "ERROR: text entry is missing categories"
-
-	levelStarting: (sec) ->
-		start = false
-		for canvas in g.canvases
-			if canvas.fadeIn sec
-				start = true
-		if start
-			@levelStart = false
-
-	update: ->
-		if @levelStart
-			@levelStarting 2
-
-	draw: ->
-		canvas.clear() for canvas in g.canvases
-		for text in @texts
-			@canvas.hardTextDraw text.text, text.left, text.top, text.font, text.fontSize, text.color
-		canvas.draw() for canvas in g.canvases
