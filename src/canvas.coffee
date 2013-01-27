@@ -33,12 +33,6 @@ class window.DrawCanvas extends WrapCanvas
 	draw: (rCanvas) ->
 		rCanvas.drawCanvas @canvas
 	
-	rotate: (angle) ->
-		@context.save()
-		@context.translate @width/2, @height/2
-		@context.rotate angle
-		@context.restore()
-
 	#DO NOT USE. This is super depricated and will not work
 	drawText: (entity) ->
 		x = Math.round (entity.x - g.gameWorld.activeLevel.worldPos.x) * g.SCALE
@@ -93,13 +87,30 @@ class window.RenderCanvas extends WrapCanvas
 	draw: ->
 		@renderContext.drawImage @canvas, 0, 0, g.width, g.height
 	
+	hardTextDraw: (text, left, top, font, fontSize, color) ->
+		@context.font = fontSize + ' ' + font
+		@context.fillStyle = color
+		@context.fillText text, left, top
+	
 	drawCanvas: (canvas) ->
-		halfW = Math.floor canvas.width/2
-		halfH = Math.floor canvas.height/2
+		halfW = Math.floor @width/2
+		halfH = Math.floor @height/2
 		@context.save()
 		@context.translate halfW, halfH
 		if canvas.angle != 0
-			console.log canvas.angle
 			@context.rotate canvas.angle
-		@context.drawImage canvas.canvas, -halfW, -halfH, canvas.width, canvas.height
+		if canvas.zoom != 1
+			@context.drawImage(
+				canvas.canvas
+				0
+				0
+				canvas.width
+				canvas.height
+				-halfW * canvas.zoom
+				-halfH * canvas.zoom
+				canvas.width * canvas.zoom
+				canvas.height * canvas.zoom
+			)
+		else
+			@context.drawImage canvas.canvas, -halfW, -halfH, canvas.width, canvas.height
 		@context.restore()

@@ -9,81 +9,98 @@ class window.RectEntity extends Entity
 	constructor: (x, y, color, @width, @height) ->
 		super x, y, color
 
-class window.Obstacle extends Entity
-	constructor: (x, y, color, @width, @height, @hori_vert) ->
-		super x, y, color
+class window.Obstacle extends RectEntity
+	constructor: (x, y, color, @parent) ->
+		super x, y, color, 30, 30
 	
+	checkCollision: ->
+		player = @parent.player
+		return not ((player.x > @x + @width) or
+				(player.x + player.width < @x) or
+				(player.y > @y + @height) or
+				(player.y + player.height < @y))
+
 	update: ->
+		if @checkCollision()
+			@parent.player.dead = true
 		@x -= g.lateral
-		###
-		if @hori_vert then @x -= g.lateral
-		else @y += g.lateral
-		###
 
 	draw: (canvas) ->
-		canvas.drawFillBorder @
+		canvas.drawFill @
 
 class window.Player extends RectEntity
-	_acceleration = 0
-	_boost = -4
-	_gap = 60 #number of milliseconds between presses
-	_lastBeat = 0 #when the last beast occured
-	_firstBeat = false
-	constructor: (x, y, color, width, height, @hori_vert) ->
-		super x, y, color, width, height
+	constructor: (x, y, color, @parent) ->
+		@acceleration = 0
+		@boost = -4
+		@gap = 60
+		@lastBeat = 0
+		@firstBeat = false
+		@dead = false
+		super x, y, color, 30, 30
 	
 	update: ->
 		input = g.input
-		_acceleration += g.gravity
-		if (@hori_vert and input.isKeyNewDown 83) or input.isKeyNewDown 76
+		@acceleration += g.gravity
+		if @parent.inputBool
 			@checkBeat()
-		@y += _acceleration
-		###
-		if @hori_vert then @y += _acceleration
-		else @x -= _acceleration
-		###
+		@y += @acceleration
 
 	checkBeat: ->
-		if not _firstBeat
-			_firstBeat = true
+		if not @firstBeat
+			@firstBeat = true
 		else
-			_firstBeat = false
-			_acceleration += _boost
+			@firstBeat = false
+			@acceleration += @boost
 		
 	draw: (canvas) ->
 		canvas.drawFill @
 
+class window.Pickup extends RectEntity
+	constructor: (x, y, @type, @parent) ->
+		switch @type
+			when 0 then color = '#ff00ff'
+			when 1 then color = '#800080'
+			when 2 then color = '#ffff00'
+			else console.log 'invalid pickup type'
+		super x, y, color, g.entityDim, g.entityDim
+		@collected = false
+	
+	checkCollision: ->
+		player = @parent.player
+		return not ((player.x > @x + @width) or
+				(player.x + player.width < @x) or
+				(player.y > @y + @height) or
+				(player.y + player.height < @y))
+
+	changeType: (type) ->
+		@type = type
+		switch @type
+			when 0 then @color = '#ff00ff'
+			when 1 then @color = '#800080'
+			when 2 then @color = '#ffff00'
+			else console.log 'invalid pickup type'
+
+	update: ->
+		if @checkCollision()
+			@collected = true
+
+	draw: (canvas) ->
+		canvas.drawFill @
+
 class window.Wall
-	constructor: (@pos, color, @hori_vert) ->
+	constructor: (@pos, color, @parent) ->
 		@entities = []
-		count = Math.ceil g.width / g.entityDim
+		count = Math.ceil (g.width * 1.5) / g.entityDim
 		for i in [0..count + 1]
-			@entities.push new Obstacle g.entityDim * i, @pos, color, g.entityDim, g.entityDim, hori_vert
-			###
-			if hori_vert
-				@entities.push new Obstacle g.entityDim * i, @pos, color, g.entityDim, g.entityDim, hori_vert
-			else
-				@entities.push new Obstacle @pos, g.entityDim * i, color, g.entityDim, g.entityDim, hori_vert
-			###
+			@entities.push new Obstacle g.entityDim * i, @pos, color, @parent
 	
 	update: ->
 		first = @entities[0]
-		if first.x + first.width < 0
+		if first.x + first.width < -(g.width / 2)
 			@entities.removeIndex 0
 			end = @entities.last()
-			last = new Obstacle end.x + g.entityDim, @pos, end.color, g.entityDim, g.entityDim, @hori_vert
+			last = new Obstacle end.x + g.entityDim, @pos, end.color, @parent
 			@entities.push last
-		###
-		if _hori_vert and first.x + first.width < 0
-			@entities.removeIndex 0
-			end = @entities.last()
-			last = new Obstacle end.x + g.entityDim, @pos, end.color, g.entityDim, g.entityDim, _hori_vert
-			@entities.push last
-		else if first.y + first.height < 0
-			@entities.removeIndex 0
-			last = new Obstacle @pos, end.y + g.entityDim, end.color, g.entityDim, g.entityDim, _hori_vert
-			@entities.push last
-		###
 		entity.update() for entity in @entities
 	
 	draw: (canvas) ->

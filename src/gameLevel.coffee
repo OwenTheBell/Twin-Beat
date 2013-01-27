@@ -1,83 +1,49 @@
 class window.GameLevel
-	@entities = []
-
 	#vert_hori: defines whether level or vertical or horizontal scroll
-	constructor: (@hori_vert) ->
-		@canvas = new DrawCanvas()
+	constructor: (@angle, @top) ->
 		@entities = []
-		@hori_vert = hori_vert
-		#this is not set to adjust for zoom level, this needs to be changed
-		@windowDimensions =
-			width: g.width / g.SCALE * 2
-			height: g.height / g.SCALE * 2
-
-		#generate the player entity
-		@player = {}
-		if @hori_vert then @player = new Player 10, 100, '#ff0000', 30, 30, @hori_vert
-		else @player = new Player 500, 560, '#ff0000', 30, 30, @hori_vert
+		@spawnGap = 1000
+		@nextSpawn = 0
+		@inputBool = false
+		@canvas = new DrawCanvas()
+		@playerC = '#800000'
+		@obstacleC = '#ff0000'
+		@gameOver = false
+		@level = 0
+		#if this is player2's level, change what needs to be changed
+		if angle != 0
+			@canvas.angle = @angle
+			@playerC = '000080'
+			@obstacleC = '#00ffff'
+		@entities = []
+		@player = new Player 25, 100, @playerC, @
 		@entities.push @player
 		
-		@entities.push new Wall -15, '#808000', @hori_vert
-		@entities.push new Wall g.height - 15, '#808000', @hori_vert
+		@entities.push new Wall -15, @obstacleC, @
+		@entities.push new Wall g.height - 15, @obstacleC, @
 
-		@levelStart = true
-
-	addEntity: ->
-		for entity in arguments
-			@entities.push entity
-
-	addPlayer: (player) ->
-		@player = player
-		@addEntity player
-
-	checkForDeath: ->
-		if @player.y > @height + @windowDimensions.height / 2 then @player.reset()
-
-	checkForEnd: ->
-		if @levelEnded
-			@levelOver 2
-		else if @player.contactEdges
-			for edge in @player.contactEdges
-				pos = edge.other.GetWorldCenter()
-				@levelOver(2) if pos == @objective.body.GetWorldCenter()
-
-	levelOver: (sec) ->
-		@levelEnded = true
-		end = false
-		for canvas in g.canvases
-			if canvas.fadeOut sec
-				end = true
-		if end
-			delete @levelEnded
-			g.gameWorld.toNextLevel()
-
-	levelStarting: (sec) ->
-		start = false
-		for canvas in g.canvases
-			if canvas.fadeIn sec
-				start = true
-		if start
-			@levelStart = false
-
-	update: ->
-		entity.update() for entity in @entities
+	update: (inputBool) ->
+		@inputBool = inputBool
+		@gameOver = @player.dead
+		if @nextSpawn <= g.now
+			for i in [0..@level]
+				1
+				#@entities.push new Obstacle g.width * 1.5, 15 + Math.floor(Math.random() * (g.height - g.entityDim * 1.5)), @obstacleC, @
+			@nextSpawn = g.now + @spawnGap + Math.random() * @spawnGap
+		@canvas.angle = @angle
+		toRemove = []
+		for entity in @entities
+			if entity.x + entity.width < -(g.width / 2)
+				toRemove.push entity
+			else
+				entity.update()
+		for entity in toRemove
+			@entities.remove entity
 
 	draw: (rCanvas) ->
 		@canvas.clear()
 		entity.draw @canvas for entity in @entities
 		rCanvas.drawCanvas @canvas
-
-	checkExtremes: (entity) ->
-		extremes = entity.extremes
-		draw = false
-		#check if the entity is contained within the player's view
-		if @viewRect.right < extremes.left \
-		or @viewRect.left > extremes.right \
-		or @viewRect.top < extremes.bottom \
-		or @viewRect.bottom > extremes.top
-			draw = true
-		if draw
-			entity.draw()
 
 ###
 	This is a level that servers only to display text on the screen. There are no
