@@ -30,8 +30,8 @@ class window.GameWorld
 		if not @swapPeriod
 			@swapPeriod = g.now + g.swap
 			console.log @swapPeriod + ' ' + g.now
-			@targetAngle1 = @createTarget @levelOrder[0].angle, Math.PI / 2
-			@targetAngle2 = @createTarget @levelOrder[1].angle, -(Math.PI / 2)
+			@targetAngle1 = @createTargetAngle @levelOrder[0].angle, Math.PI / 2
+			@targetAngle2 = @createTargetAngle @levelOrder[1].angle, -(Math.PI / 2)
 			console.log @targetAngle1 + ' ' + @targetAngle2
 		else if g.now <= @swapPeriod
 			@swapZoomAdj -= 0.6 * (g.elapsed / g.swap)
@@ -59,7 +59,7 @@ class window.GameWorld
 			console.log @revPeriod + ' ' + g.now
 			if onbot then @revTarget = 0
 			else @revTarget = 1
-			@targetAngle = @createTarget @levelOrder[@revTarget].angle, Math.PI
+			@targetAngle = @createTargetAngle @levelOrder[@revTarget].angle, Math.PI
 			console.log @targetAngle
 		else if g.now <= @revPeriod
 			angleAdj = (Math.PI) * (g.elapsed / g.reverse)
@@ -73,7 +73,7 @@ class window.GameWorld
 			delete @targetAngle
 			@nextPickup = g.now + @pickupSplit + (Math.random() * @pickupSplit)
 	
-	createTarget: (old, adj) ->
+	createTargetAngle: (old, adj) ->
 		target = (Math.PI / 2) * Math.round (old + adj) / (Math.PI / 2)
 		if target > Math.PI * 2
 			target = (Math.PI / 2) * Math.round (target - Math.PI * 2) / (Math.PI / 2)
@@ -136,15 +136,15 @@ class window.GameWorld
 			#check for game over and update the levels
 			if not @level1.gameOver
 				if not @challengePrep
-					@level1.update g.input.isKeyNewDown 83
+					@level1.update g.input.isKeyDown 83
 			else if not @gameOver
 				@end = g.now
 				@gameOver = true
 				@winner = 2
 			if not @level2.gameOver
 				if not @challengePrep
-					#@level2.update g.input.isKeyNewDown 83
-					@level2.update g.input.isKeyNewDown 76
+					#@level2.update g.input.isKeyDown 83
+					@level2.update g.input.isKeyDown 76
 			else if not @gameOver
 				@end = g.now
 				@gameOver = true

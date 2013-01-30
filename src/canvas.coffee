@@ -38,7 +38,7 @@ class window.DrawCanvas extends WrapCanvas
 		x = Math.floor entity.x
 		y = Math.floor entity.y
 		@context.save()
-		@context.fillStyle = entity.color
+		@context.fillStyle = entity.color if @context.fillStyle != entity.color
 		@context.fillRect x, y, entity.width, entity.height
 		@context.restore()
 	
@@ -84,18 +84,15 @@ class window.RenderCanvas extends WrapCanvas
 		@context.translate halfW, halfH
 		if canvas.angle != 0
 			@context.rotate canvas.angle
-		if canvas.zoom != 1
-			@context.drawImage(
-				canvas.canvas
-				0
-				0
-				canvas.width
-				canvas.height
-				-halfW * canvas.zoom
-				-halfH * canvas.zoom
-				canvas.width * canvas.zoom
-				canvas.height * canvas.zoom
-			)
-		else
-			@context.drawImage canvas.canvas, -halfW, -halfH, canvas.width, canvas.height
+		@context.drawImage(
+			canvas.canvas
+			0
+			0
+			canvas.width
+			canvas.height
+			-halfW * canvas.zoom
+			-halfH * canvas.zoom
+			canvas.width * canvas.zoom
+			canvas.height * canvas.zoom
+		)
 		@context.restore()

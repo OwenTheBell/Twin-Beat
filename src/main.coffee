@@ -43,11 +43,13 @@ window.requestAnimationFrame or=
 
 #if console is not supported (ie. IE not in debug mode) then set the console
 #to an empty object to make sure that the code doesn't crash
+###
 try
 	console
 catch e
 	console = {}
 	console.log = ->
+###
 
 ###
 setInterval ->
@@ -60,15 +62,16 @@ $ ->
 init = ->
 	g.input = new InputHandler()
 	g.div = document.getElementById 'twinbeat'
-	g.width = $('#twinbeat').width()
-	g.height = $('#twinbeat').height()
-	g.top = $('#twinbeat').top
-	g.left = $('#twinbeat').left
-	g.gravity = .06
+	g.width = g.div.clientWidth
+	g.height = g.div.clientHeight
+	g.top = g.div.offsetTop
+	g.left = g.div.offsetLeft
+	#g.gravity = .18
+	g.gravity = 10.8
 	g.lateral = 4 #per frame lateral move, needs to change
 	g.entityDim = 30
 	g.swap = 200 #time to swap levels
-	g.reverse = 300
+	g.reverse = 200
 	g.challenge = 25000
 	g.challengePrep = 3000
 	g.challengeRot = 2 #number of full rotations in challenge mode
@@ -80,7 +83,6 @@ init = ->
 	g.elapsed = 0
 	g.sixty = Date.now()
 	g.output = 0
-	g.frameCount = 0
 	g.gameWorld = new GameWorld()
 	g.cachedSprites = []
 	gameLoop()
@@ -92,18 +94,12 @@ gameLoop = ->
 	g.lastFrame = g.now
 	#sometimes requestAnimationFrame runs at greater than 60Hz so ensure that
 	#framerate remains capped at 1/60
-	g.elapsed = 1/60 if g.elapsed < 1/60
-	if g.frameCount < 60
-		g.frameCount++
-	else
-		g.frameCount = 0
-		temp = Date.now()
-		g.output = temp - g.sixty
-		g.sixty = temp
+	#g.elapsed = 1/60 if g.elapsed < 1/60
 	run()
 	requestAnimationFrame(gameLoop)
 
 run = ->
+	g.sFrac = g.elapsed / 1000 #fraction of a second covered by last frame
 	if g.gameWorld.reset
 		delete g.gameWorld
 		$('#twinbeat').html ''

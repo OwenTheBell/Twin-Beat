@@ -31,7 +31,7 @@ class window.Obstacle extends RectEntity
 class window.Player extends RectEntity
 	constructor: (x, y, color, @parent) ->
 		@acceleration = 0
-		@boost = -2
+		@boost = -30
 		@gap = 500
 		@lastBeat = 0
 		@firstBeat = false
@@ -41,26 +41,13 @@ class window.Player extends RectEntity
 	update: ->
 		input = g.input
 		#gravity pulls harder the closer to the top you are
-		@acceleration += g.gravity
-		#@acceleration += g.gravity * (1 - (@y / g.height)) 
-		@checkBeat()
+		@acceleration += g.gravity * g.sFrac
+		if @parent.inputBool
+			@acceleration += @boost * g.sFrac
+		#cap the max upward climb speed, this just makes everything feel better
+		if @acceleration <= -5.5 then @acceleration = -5.5
 		@y += @acceleration
 
-	checkBeat: ->
-		if @lastBeat + @gap <= g.now
-			@lastBeat = null
-			@firstBeat = false
-		if @parent.inputBool
-			if not @firstBeat
-				@firstBeat = true
-				@lastBeat = g.now
-			else
-				gap = g.now - @lastBeat
-				boost = @boost + (@boost * (1 - (gap / @gap)))
-				console.log boost
-				@acceleration += boost
-				@firstBeat = false
-		
 	draw: (canvas) ->
 		canvas.drawFill @
 
