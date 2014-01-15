@@ -1,5 +1,4 @@
-Twin Beat
-=====
+# Twin Beat
 
 A game written in CoffeeScript for Global Game Jam 2013.
 
