@@ -1,6 +1,12 @@
 Twin Beat
+=====
 
 A game written in CoffeeScript for Global Game Jam 2013.
+
+## How To Play
+Just download the project and open dodge.html in running/
+
+## Directories
 
 All sources files for the game can be found in the src/ directory.
 
